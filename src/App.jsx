@@ -1,28 +1,72 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import RecipeForm from './components/RecipeForm'
-import RecipeList from './components/RecipeList'
+import { useState, useEffect } from "react";
+import "./App.css";
+import RecipeForm from "./components/RecipeForm";
+import RecipeList from "./components/RecipeList";
 
 // This is your base URL for your API
-const API_URL = 'http://localhost:8080'
+const API_URL = "http://localhost:8080";
 
 export default function App() {
   // `recipes` is just a local snapshot — a successful request below won't show up
   // on screen until you also call setRecipes. The server and this state don't auto-sync.
   // AGAIN, the frontend UI state and the server data don't auto-sync - you must do this manually!
   // WHAT DOES THAT MEAN: Just becuase you were able to modify the state/data in the server with the fetch calls, doesn't mean the UI will reflect that automatically.
-  const [recipes, setRecipes] = useState([])
+  const [recipes, setRecipes] = useState([]);
 
   useEffect(() => {
     // TODO (Part 1): fetch `${API_URL}/api/recipes`, convert the response to JSON, and setRecipes with it
-  }, [])
+
+    const myRequest = new Request(`${API_URL}/api/recipes`);
+
+    fetch(myRequest)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        setRecipes(data);
+      });
+  }, []);
 
   function handleAddRecipe(newRecipe) {
     // TODO (Part 2): POST newRecipe to `${API_URL}/api/recipes`, then add the created recipe to `recipes`
+
+    fetch(`${API_URL}/api/recipes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newRecipe),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((recipeData) => {
+        setRecipes([...recipes, recipeData]);
+      });
   }
 
   function handleDeleteRecipe(id) {
     // TODO (Part 3): DELETE `${API_URL}/api/recipes/${id}`, then remove that recipe from `recipes`
+
+    fetch(`${API_URL}/api/recipes/${id}`, {
+      method: "DELETE",
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      setRecipes((currentRecipes) =>
+        currentRecipes.filter((recipe) => recipe.id !== id),
+      );
+    });
   }
 
   function handleToggleVegetarian(id) {
@@ -39,5 +83,5 @@ export default function App() {
         onToggleVegetarian={handleToggleVegetarian}
       />
     </div>
-  )
+  );
 }
