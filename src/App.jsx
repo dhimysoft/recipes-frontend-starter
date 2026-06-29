@@ -28,19 +28,37 @@ export default function App() {
       })
       .then((data) => {
         setRecipes(data);
+      })
+      .catch((error) => {
+        console.error("Could not load recipes:", error);
       });
   }, []);
+
+  //   useEffect(() => {
+  //   async function fetchData() {
+  //     const response = await fetch(`${API_URL}/api/recipes`);
+  //     const data = await response.json();
+
+  //     setRecipes(data);
+  //   }
+
+  //   fetchData();
+  // }, []);
 
   function handleAddRecipe(newRecipe) {
     // TODO (Part 2): POST newRecipe to `${API_URL}/api/recipes`, then add the created recipe to `recipes`
 
-    fetch(`${API_URL}/api/recipes`, {
+    console.log("recipe in the handler>>", newRecipe);
+
+    const fetchOptions = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(newRecipe),
-    })
+    };
+
+    fetch(API_URL + "/api/recipes", fetchOptions)
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -48,8 +66,13 @@ export default function App() {
 
         return response.json();
       })
-      .then((recipeData) => {
-        setRecipes([...recipes, recipeData]);
+      .then((data) => {
+        console.log(data);
+
+        setRecipes((currentRecipes) => [...currentRecipes, data]);
+      })
+      .catch((error) => {
+        console.error("Could not add recipe:", error);
       });
   }
 
@@ -58,19 +81,62 @@ export default function App() {
 
     fetch(`${API_URL}/api/recipes/${id}`, {
       method: "DELETE",
-    }).then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
-      setRecipes((currentRecipes) =>
-        currentRecipes.filter((recipe) => recipe.id !== id),
-      );
-    });
+        setRecipes((currentRecipes) =>
+          currentRecipes.filter((recipe) => recipe.id !== id)
+        );
+      })
+      .catch((error) => {
+        console.error("Could not delete recipe:", error);
+      });
   }
 
-  function handleToggleVegetarian(id) {
+  function handleToggleVegetarian(id, recObj) {
+    console.log(id, recObj);
+
     // TODO (Stretch): PATCH `${API_URL}/api/recipes/${id}` to flip `vegetarian`, then update `recipes`
+
+    const isVegetarian = recObj.vegetarian;
+
+    const options = {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        vegetarian: !isVegetarian,
+      }),
+    };
+
+    fetch(`${API_URL}/api/recipes/${id}`, options)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+
+        setRecipes((currentRecipes) =>
+          currentRecipes.map((rec) => {
+            if (rec.id === id) {
+              return data;
+            }
+
+            return rec;
+          })
+        );
+      })
+      .catch((error) => {
+        console.error("Could not update recipe:", error);
+      });
   }
 
   return (
